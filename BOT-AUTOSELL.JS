@@ -14,7 +14,7 @@
     'use strict';
 
     // Definir la licencia directamente en el código
-    const LICENCIA = "TU_CODIGO_DE_LICENCIA";  // Cambia este valor cuando actualices la licencia
+    const LICENCIA = "1234";  // Cambia este valor cuando actualices la licencia
     const DURACION_LICENCIA = 30;  // Duración de la licencia en días (1 mes)
 
     // Función para obtener la fecha actual en formato YYYY-MM-DD
