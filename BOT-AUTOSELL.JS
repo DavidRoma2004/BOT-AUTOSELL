@@ -10,8 +10,67 @@
 
 (function() {
     'use strict';
+(function() {
+    'use strict';
 
-    // Global variables to store the resource and minimum price
+    // Definir la licencia directamente en el código
+    const LICENCIA = "TU_CODIGO_DE_LICENCIA";  // Cambia este valor cuando actualices la licencia
+    const DURACION_LICENCIA = 30;  // Duración de la licencia en días (1 mes)
+
+    // Función para obtener la fecha actual en formato YYYY-MM-DD
+    function obtenerFechaActual() {
+        return new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+    }
+
+    // Función para obtener la licencia almacenada en localStorage
+    function obtenerLicenciaGuardada() {
+        return JSON.parse(localStorage.getItem("licencia_data"));
+    }
+
+    // Función para guardar la licencia en localStorage
+    function guardarLicencia() {
+        const fechaActivacion = obtenerFechaActual();
+        const fechaExpiracion = new Date();
+        fechaExpiracion.setDate(fechaExpiracion.getDate() + DURACION_LICENCIA); // Sumar 1 mes (30 días)
+
+        const licenciaData = {
+            codigo: LICENCIA,
+            fecha_activacion: fechaActivacion,
+            fecha_expiracion: fechaExpiracion.toISOString().split('T')[0] // Guardar en formato YYYY-MM-DD
+        };
+
+        localStorage.setItem("licencia_data", JSON.stringify(licenciaData));
+    }
+
+    // Función para verificar si la licencia es válida
+    function verificarLicencia() {
+        const licenciaData = obtenerLicenciaGuardada();
+
+        if (!licenciaData) {
+            console.log("❌ No hay licencia guardada. Guardando la nueva licencia...");
+            guardarLicencia();  // Guardamos la nueva licencia al ejecutarse por primera vez
+            alert("✅ Licencia activada. Expira en 1 mes.");
+            ejecutarCodigo(); // Ejecutar el código
+            return;
+        }
+
+        const hoy = new Date(obtenerFechaActual());
+        const fechaExpiracion = new Date(licenciaData.fecha_expiracion);
+
+        if (hoy > fechaExpiracion) {
+            alert("⏳ Tu licencia ha expirado. Ingresa una nueva licencia.");
+            localStorage.removeItem("licencia_data"); // Eliminar la licencia caducada
+            return;
+        }
+
+        console.log("✅ Licencia válida hasta:", licenciaData.fecha_expiracion);
+        ejecutarCodigo(); // Ejecutar el código si la licencia es válida
+    }
+
+    // Función para ejecutar el código del script
+    function ejecutarCodigo() {
+        console.log("🔥 Código del script ejecutándose...");
+        // Global variables to store the resource and minimum price
     let selectedResource = null;
     let minimumPrice = null;
 
@@ -201,4 +260,9 @@
 
     // Execute the main function
     runScript();
+})();
+    }
+
+    // Verificar licencia al inicio
+    verificarLicencia();
 })();
