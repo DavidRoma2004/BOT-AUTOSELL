@@ -1,4 +1,3 @@
-82 % de almacenamiento usado … Si te quedas sin espacio, no podrás crear, editar ni subir archivos. Disfruta de 100 GB de almacenamiento por 1,99 € 0,49 € durante 1 mes (precio personalizado).
 // ==UserScript==
 // @name         Automatic Resource Sale
 // @namespace    http://tampermonkey.net/
