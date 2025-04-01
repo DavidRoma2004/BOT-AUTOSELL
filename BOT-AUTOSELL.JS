@@ -1,4 +1,3 @@
-
 // ==UserScript==
 // @name         Automatic Resource Sale
 // @namespace    http://tampermonkey.net/
@@ -41,20 +40,17 @@
 
     // Function to type text into a field realistically
     async function typeText(field, text) {
-        // Clear the text field before writing
-        field.value = ''; // This line clears the text field
+        field.value = ''; // Clear the text field before writing
 
         for (let i = 0; i < text.length; i++) {
             field.value += text.charAt(i);
-            await new Promise(resolve => setTimeout(resolve, Math.random() * 300 + 100)); // Random delay between 100 and 400 ms
+            await new Promise(resolve => setTimeout(resolve, Math.random() * 300 + 100)); // Random delay
         }
-        // Simulate the input event to trigger class change
         field.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
     // Function to show notification with loading emoji and keep it on screen
     function showNotification(message) {
-        // Create the notification container if it doesn't exist
         let notification = document.getElementById('script-notification');
         if (!notification) {
             notification = document.createElement('div');
@@ -73,7 +69,6 @@
             document.body.appendChild(notification);
         }
 
-        // Update the message and emoji to show loading
         notification.innerHTML = `${message} <span>⏳</span>`;
         notification.style.opacity = '1'; // Ensure it's visible
     }
@@ -82,10 +77,10 @@
     function hideNotification() {
         let notification = document.getElementById('script-notification');
         if (notification) {
-            notification.style.opacity = '0'; // Fade out the notification
+            notification.style.opacity = '0';
             setTimeout(() => {
-                notification.style.display = 'none'; // After fading out, remove the notification
-            }, 300); // Wait for the fade effect to complete before hiding
+                notification.style.display = 'none';
+            }, 300);
         }
     }
 
@@ -101,7 +96,7 @@
         }
 
         // Wait until the resource container is available
-        let resourceContainerXpath = '/html/body/div[6]/div[1]'; // Adjust this XPath if needed
+        let resourceContainerXpath = '/html/body/div[6]/div[1]';
         await waitForElement(resourceContainerXpath);
 
         // Step 1: If no resource was selected previously, ask the user to choose a number for the resource
@@ -125,7 +120,7 @@
             };
 
             // Save the selected resource to the global variable
-            selectedResource = resources[resource];
+            selectedResource = resources[parseInt(resource)];
 
             // Step 2: Ask the user for the lowest price at which they would sell the resource
             let userPrice = prompt("Enter the lowest price at which you would sell the resource (no commas or dots):");
@@ -153,7 +148,7 @@
             // Step 6: Check if the transaction is profitable
             if (currentPrice < minimumPrice) {
                 alert("Transaction not profitable. We will try again in 2 minutes.");
-                setTimeout(runScript, 60000); // Wait 1 minutes before trying again
+                setTimeout(runScript, 120000); // Wait 2 minutes before trying again
             } else {
                 // Step 7: Click on the next button (simulate click with MouseEvent)
                 let nextXpath = '/html/body/div[6]/div[1]/div[1]/div[1]/div/span';
@@ -165,25 +160,21 @@
                     let textFieldXpath = '/html/body/div[6]/div[1]/div[1]/div[2]/div[3]/input';
                     let textField = await waitForElement(textFieldXpath);
                     if (textField) {
-                        // Clear the text field and type the price minus 1 realistically
                         await typeText(textField, (currentPrice - 1).toString());
 
                         // Step 9: Check if the confirmation button is enabled
                         let confirmButtonXpath = '/html/body/div[6]/div[1]/div[1]/div[2]/div[4]/div';
                         let confirmButton = await waitForElement(confirmButtonXpath);
                         if (confirmButton) {
-                            // Check if the button is disabled (with the 'no_pointer' class)
                             if (confirmButton.classList.contains('no_pointer')) {
-                                // Change the class to enable the button (remove 'no_pointer' and add 'button_green')
                                 confirmButton.classList.remove('no_pointer');
                                 confirmButton.classList.add('button_green');
                             }
 
-                            // Now that the button has the correct class, simulate a click
                             simulateClick(confirmButton);
 
-                            // Step 10: Wait 1 minutes and repeat the process
-                            setTimeout(runScript, 60000); // Wait 1 minutes before restarting the process
+                            // Step 10: Wait 2 minutes and repeat the process
+                            setTimeout(runScript, 120000); // Wait 2 minutes before restarting the process
                         } else {
                             alert("Could not find the confirm button. The script will stop.");
                         }
