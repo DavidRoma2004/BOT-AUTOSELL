@@ -1,3 +1,4 @@
+82 % de almacenamiento usado … Si te quedas sin espacio, no podrás crear, editar ni subir archivos. Disfruta de 100 GB de almacenamiento por 1,99 € 0,49 € durante 1 mes (precio personalizado).
 // ==UserScript==
 // @name         Automatic Resource Sale
 // @namespace    http://tampermonkey.net/
@@ -11,63 +12,11 @@
 (function() {
     'use strict';
 
-    // Licencia del script
-    const LICENCIA = "1234";  // Cambia este valor cuando actualices la licencia
-    const DURACION_LICENCIA = 30;  // Duración de la licencia en días (1 mes)
+    // Global variables to store the resource and minimum price
+    let selectedResource = null;
+    let minimumPrice = null;
 
-    // Función para obtener la fecha actual en formato YYYY-MM-DD
-    function obtenerFechaActual() {
-        return new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
-    }
-
-    // Función para obtener la licencia almacenada en localStorage
-    function obtenerLicenciaGuardada() {
-        return JSON.parse(localStorage.getItem("licencia_data"));
-    }
-
-    // Función para guardar la licencia en localStorage
-    function guardarLicencia() {
-        const fechaActivacion = obtenerFechaActual();
-        const fechaExpiracion = new Date();
-        fechaExpiracion.setDate(fechaExpiracion.getDate() + DURACION_LICENCIA); // Sumar 1 mes (30 días)
-
-        const licenciaData = {
-            codigo: LICENCIA,
-            fecha_activacion: fechaActivacion,
-            fecha_expiracion: fechaExpiracion.toISOString().split('T')[0] // Guardar en formato YYYY-MM-DD
-        };
-
-        localStorage.setItem("licencia_data", JSON.stringify(licenciaData));
-    }
-
-    // Función para verificar si la licencia es válida
-    function verificarLicencia() {
-        const licenciaData = obtenerLicenciaGuardada();
-
-        if (!licenciaData) {
-            console.log("❌ No hay licencia guardada. Guardando la nueva licencia...");
-            guardarLicencia();  // Guardamos la nueva licencia al ejecutarse por primera vez
-            alert("✅ Licencia activada. Expira en 1 mes.");
-            ejecutarCodigo(); // Ejecutar el código
-            return;
-        }
-
-        const hoy = new Date(obtenerFechaActual());
-        const fechaExpiracion = new Date(licenciaData.fecha_expiracion);
-
-        if (hoy > fechaExpiracion) {
-            alert("⏳ Tu licencia ha expirado. Ingresa una nueva licencia.");
-            localStorage.removeItem("licencia_data"); // Eliminar la licencia caducada
-            return;
-        }
-
-        console.log("✅ Licencia válida hasta:", licenciaData.fecha_expiracion);
-        ejecutarCodigo(); // Ejecutar el código si la licencia es válida
-    }
-
-    // ========================== FUNCIONES DE INTERACCIÓN CON LA PÁGINA ==========================
-
-    // Esperar a que un elemento esté disponible
+    // Function to wait until the element is available
     function waitForElement(xpath) {
         return new Promise((resolve) => {
             const interval = setInterval(() => {
@@ -76,11 +25,11 @@
                     clearInterval(interval);
                     resolve(element);
                 }
-            }, 500); // Revisar cada 500ms
+            }, 500); // Check every 500ms
         });
     }
 
-    // Simular un clic en un elemento
+    // Function to simulate a mouse click on an element
     function simulateClick(element) {
         const mouseEvent = new MouseEvent('click', {
             bubbles: true,
@@ -90,19 +39,22 @@
         element.dispatchEvent(mouseEvent);
     }
 
-    // Escribir texto en un campo de entrada de forma realista
+    // Function to type text into a field realistically
     async function typeText(field, text) {
-        field.value = ''; // Limpiar el campo de texto
+        // Clear the text field before writing
+        field.value = ''; // This line clears the text field
 
         for (let i = 0; i < text.length; i++) {
             field.value += text.charAt(i);
-            await new Promise(resolve => setTimeout(resolve, Math.random() * 300 + 100)); // Retraso aleatorio entre 100 y 400ms
+            await new Promise(resolve => setTimeout(resolve, Math.random() * 300 + 100)); // Random delay between 100 and 400 ms
         }
+        // Simulate the input event to trigger class change
         field.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
-    // Mostrar una notificación
+    // Function to show notification with loading emoji and keep it on screen
     function showNotification(message) {
+        // Create the notification container if it doesn't exist
         let notification = document.getElementById('script-notification');
         if (!notification) {
             notification = document.createElement('div');
@@ -121,93 +73,133 @@
             document.body.appendChild(notification);
         }
 
+        // Update the message and emoji to show loading
         notification.innerHTML = `${message} <span>⏳</span>`;
-        notification.style.opacity = '1';
+        notification.style.opacity = '1'; // Ensure it's visible
     }
 
-    // Ocultar la notificación
+    // Function to hide the notification
     function hideNotification() {
         let notification = document.getElementById('script-notification');
         if (notification) {
-            notification.style.opacity = '0'; 
+            notification.style.opacity = '0'; // Fade out the notification
             setTimeout(() => {
-                notification.style.display = 'none';
-            }, 300);
+                notification.style.display = 'none'; // After fading out, remove the notification
+            }, 300); // Wait for the fade effect to complete before hiding
         }
     }
 
-    // ========================== FUNCIÓN PRINCIPAL DEL SCRIPT ==========================
-
-    // Función principal que ejecuta el script
+    // Main function to execute the entire flow
     async function runScript() {
-        showNotification("El script está esperando...");
+        // Show notification that the script is waiting
+        showNotification("The script is waiting...");
 
+        // Check if we are on the correct page
         if (window.location.href !== 'https://rivalregions.com/#storage') {
-            console.log("Este script solo corre en la página de almacenamiento.");
+            console.log("This script only runs on the storage page.");
             return;
         }
 
-        // Esperar hasta que el contenedor de recursos esté disponible
-        const resourceContainerXpath = '/html/body/div[6]/div[1]';
+        // Wait until the resource container is available
+        let resourceContainerXpath = '/html/body/div[6]/div[1]'; // Adjust this XPath if needed
         await waitForElement(resourceContainerXpath);
 
-        let selectedResource = await getUserResourceChoice();
-
+        // Step 1: If no resource was selected previously, ask the user to choose a number for the resource
         if (!selectedResource) {
-            alert("No se seleccionó un recurso válido. El script se detendrá.");
-            return;
+            let resource = prompt("Enter a number to choose the resource:\n1: OIL\n2: ORE\n3: DIAMOND\n4: URANIUM\n5: OXYGEN\n6: RIVALIUM\n7: HELIUM");
+
+            if (resource < 1 || resource > 7) {
+                alert("Invalid number. The script will stop.");
+                return;
+            }
+
+            // Map the resource number to the corresponding XPath
+            const resources = {
+                1: { name: "OIL", xpath: '/html/body/div[6]/div[1]/div[3]' },
+                2: { name: "ORE", xpath: '/html/body/div[6]/div[1]/div[4]' },
+                3: { name: "DIAMOND", xpath: '/html/body/div[6]/div[1]/div[6]' },
+                4: { name: "URANIUM", xpath: '/html/body/div[6]/div[1]/div[5]' },
+                5: { name: "OXYGEN", xpath: '/html/body/div[6]/div[1]/div[7]' },
+                6: { name: "RIVALIUM", xpath: '/html/body/div[6]/div[1]/div[9]' },
+                7: { name: "HELIUM", xpath: '/html/body/div[6]/div[1]/div[8]' }
+            };
+
+            // Save the selected resource to the global variable
+            selectedResource = resources[resource];
+
+            // Step 2: Ask the user for the lowest price at which they would sell the resource
+            let userPrice = prompt("Enter the lowest price at which you would sell the resource (no commas or dots):");
+            minimumPrice = parseFloat(userPrice.replace(/[^0-9]/g, ''));
         }
 
-        // Esperar que el precio esté disponible y tomar acción según el precio
-        await handleResourceTransaction(selectedResource);
-        
-        hideNotification();  // Ocultar la notificación después de completar el proceso
-    }
-
-    // Obtener la elección del recurso por parte del usuario
-    async function getUserResourceChoice() {
-        let resource = prompt("Ingresa un número para elegir el recurso:\n1: OIL\n2: ORE\n3: DIAMOND\n4: URANIUM\n5: OXYGEN\n6: RIVALIUM\n7: HELIUM");
-
-        const resources = {
-            1: { name: "OIL", xpath: '/html/body/div[6]/div[1]/div[3]' },
-            2: { name: "ORE", xpath: '/html/body/div[6]/div[1]/div[4]' },
-            3: { name: "DIAMOND", xpath: '/html/body/div[6]/div[1]/div[6]' },
-            4: { name: "URANIUM", xpath: '/html/body/div[6]/div[1]/div[5]' },
-            5: { name: "OXYGEN", xpath: '/html/body/div[6]/div[1]/div[7]' },
-            6: { name: "RIVALIUM", xpath: '/html/body/div[6]/div[1]/div[9]' },
-            7: { name: "HELIUM", xpath: '/html/body/div[6]/div[1]/div[8]' }
-        };
-
-        return resources[resource];
-    }
-
-    // Ejecutar la transacción del recurso
-    async function handleResourceTransaction(selectedResource) {
-        const resourceXpath = selectedResource.xpath;
+        // Find the resource on the page and click it
+        let resourceXpath = selectedResource.xpath;
         let resourceElement = await waitForElement(resourceXpath);
-
         if (resourceElement) {
             resourceElement.click();
         } else {
-            alert("No se pudo encontrar el recurso. El script se detendrá.");
+            alert("Could not find the resource. The script will stop.");
             return;
         }
 
-        // Lógica para manejar el precio del recurso y la venta
-        const priceXpath = '/html/body/div[6]/div[1]/div[1]/div[2]/div[1]/div[3]/span/span';
+        // Step 5: Get the current price on the page
+        let priceXpath = '/html/body/div[6]/div[1]/div[1]/div[2]/div[1]/div[3]/span/span';
         let priceElement = await waitForElement(priceXpath);
 
         if (priceElement) {
-            let currentPriceText = priceElement.innerText.replace(/[^0-9]/g, '');
+            let currentPriceText = priceElement.innerText.replace(/[^0-9]/g, ''); // Remove non-numeric characters
             let currentPrice = parseFloat(currentPriceText);
 
-            // Aquí añadirías la lógica de comparación de precios, como en tu flujo anterior.
+            // Step 6: Check if the transaction is profitable
+            if (currentPrice < minimumPrice) {
+                alert("Transaction not profitable. We will try again in 2 minutes.");
+                setTimeout(runScript, 60000); // Wait 1 minutes before trying again
+            } else {
+                // Step 7: Click on the next button (simulate click with MouseEvent)
+                let nextXpath = '/html/body/div[6]/div[1]/div[1]/div[1]/div/span';
+                let nextElement = await waitForElement(nextXpath);
+                if (nextElement) {
+                    simulateClick(nextElement);
+
+                    // Step 8: Enter the number in the text field
+                    let textFieldXpath = '/html/body/div[6]/div[1]/div[1]/div[2]/div[3]/input';
+                    let textField = await waitForElement(textFieldXpath);
+                    if (textField) {
+                        // Clear the text field and type the price minus 1 realistically
+                        await typeText(textField, (currentPrice - 1).toString());
+
+                        // Step 9: Check if the confirmation button is enabled
+                        let confirmButtonXpath = '/html/body/div[6]/div[1]/div[1]/div[2]/div[4]/div';
+                        let confirmButton = await waitForElement(confirmButtonXpath);
+                        if (confirmButton) {
+                            // Check if the button is disabled (with the 'no_pointer' class)
+                            if (confirmButton.classList.contains('no_pointer')) {
+                                // Change the class to enable the button (remove 'no_pointer' and add 'button_green')
+                                confirmButton.classList.remove('no_pointer');
+                                confirmButton.classList.add('button_green');
+                            }
+
+                            // Now that the button has the correct class, simulate a click
+                            simulateClick(confirmButton);
+
+                            // Step 10: Wait 1 minutes and repeat the process
+                            setTimeout(runScript, 60000); // Wait 1 minutes before restarting the process
+                        } else {
+                            alert("Could not find the confirm button. The script will stop.");
+                        }
+                    }
+                } else {
+                    alert("Could not find the next button. The script will stop.");
+                }
+            }
         } else {
-            alert("No se pudo obtener el precio del recurso. El script se detendrá.");
+            alert("Could not get the current resource price. The script will stop.");
         }
+
+        // After completing the entire process, hide the notification
+        hideNotification();
     }
 
-    // Verificar licencia al inicio
-    verificarLicencia();
-
+    // Execute the main function
+    runScript();
 })();
