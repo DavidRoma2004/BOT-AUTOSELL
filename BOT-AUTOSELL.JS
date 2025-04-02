@@ -110,13 +110,13 @@
 
             // Map the resource number to the corresponding XPath
             const resources = {
-                1: { name: "OIL", xpath: '/html/body/div[6]/div[1]/div[3]' },
-                2: { name: "ORE", xpath: '/html/body/div[6]/div[1]/div[4]' },
-                3: { name: "DIAMOND", xpath: '/html/body/div[6]/div[1]/div[6]' },
-                4: { name: "URANIUM", xpath: '/html/body/div[6]/div[1]/div[5]' },
-                5: { name: "OXYGEN", xpath: '/html/body/div[6]/div[1]/div[7]' },
-                6: { name: "RIVALIUM", xpath: '/html/body/div[6]/div[1]/div[9]' },
-                7: { name: "HELIUM", xpath: '/html/body/div[6]/div[1]/div[8]' }
+                "1": { name: "OIL", xpath: '/html/body/div[6]/div[1]/div[3]' },
+                "2": { name: "ORE", xpath: '/html/body/div[6]/div[1]/div[4]' },
+                "3": { name: "DIAMOND", xpath: '/html/body/div[6]/div[1]/div[6]' },
+                "4": { name: "URANIUM", xpath: '/html/body/div[6]/div[1]/div[5]' },
+                "5": { name: "OXYGEN", xpath: '/html/body/div[6]/div[1]/div[7]' },
+                "6": { name: "RIVALIUM", xpath: '/html/body/div[6]/div[1]/div[9]' },
+                "7": { name: "HELIUM", xpath: '/html/body/div[6]/div[1]/div[8]' }
             };
 
             // Save the selected resource to the global variable
